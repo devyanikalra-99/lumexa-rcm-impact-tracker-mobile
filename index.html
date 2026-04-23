@@ -142,6 +142,66 @@
     letter-spacing: -0.02em;
   }
 
+  /* ====== Tooltips ====== */
+  .info-icon {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 1.2px solid var(--ink-4);
+    color: var(--ink-4);
+    font-size: 11px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-family: var(--sans);
+    background: transparent;
+    flex-shrink: 0;
+    margin-left: 2px;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .info-icon.open {
+    border-color: var(--lumexa-navy);
+    color: var(--lumexa-navy);
+    background: var(--lumexa-cyan-soft);
+  }
+  .hero-card-primary .info-icon {
+    border-color: rgba(255, 255, 255, 0.55);
+    color: rgba(255, 255, 255, 0.85);
+  }
+  .hero-card-primary .info-icon.open {
+    border-color: white;
+    color: white;
+    background: rgba(255, 255, 255, 0.18);
+  }
+
+  .tip-popover {
+    position: fixed;
+    background: var(--ink);
+    color: white;
+    padding: 10px 13px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 400;
+    line-height: 1.45;
+    max-width: 260px;
+    min-width: 200px;
+    z-index: 9999;
+    font-family: var(--sans);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    pointer-events: none;
+  }
+  .tip-popover::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--ink);
+  }
+
   /* ====== Container ====== */
   .container {
     padding: 16px 14px 40px;
@@ -540,15 +600,23 @@
   }
   .code-tag {
     font-family: var(--mono);
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--ink);
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--lumexa-navy-deep);
+    white-space: nowrap;
+    letter-spacing: -0.01em;
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .code-value {
     font-family: var(--mono);
     font-size: 11px;
-    font-weight: 600;
-    color: var(--ink);
+    font-weight: 700;
+    color: var(--lumexa-navy-deep);
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   .code-desc {
     font-size: 10.5px;
@@ -654,8 +722,8 @@
   .bar-row-value {
     font-family: var(--mono);
     font-size: 11px;
-    font-weight: 600;
-    color: var(--ink);
+    font-weight: 700;
+    color: var(--lumexa-navy-deep);
     flex-shrink: 0;
   }
   .bar-row-bar {
@@ -757,33 +825,30 @@ const QUARTER_OPTIONS = [
 ];
 
 const DENIAL_CODES = [
-  { code: 'CO-22',  desc: 'Coordination of benefits',               share: 0.41, fix: 'Real-time eligibility discovery surfaces true primary payer before submission' },
-  { code: 'CO-109', desc: 'Not covered by this payer',              share: 0.19, fix: 'Payer routing correction — BCBS BlueCard home plan lookup' },
-  { code: 'PR-27',  desc: 'Patient cannot be identified as insured',share: 0.14, fix: 'Flag "Needs Updated Insurance" records at intake' },
-  { code: 'CO-26',  desc: 'Expenses incurred prior to coverage',    share: 0.09, fix: 'Active-coverage date check pre-service' },
-  { code: 'CO-31',  desc: 'Patient not identified',                 share: 0.08, fix: null },
-  { code: 'CO-28',  desc: 'Coverage not in effect on DOS',          share: 0.06, fix: null },
-  { code: 'Other',  desc: 'Long-tail codes',                         share: 0.03, fix: null },
+  { code: 'CO-22',  desc: 'Coordination of benefits',                 share: 0.42, fix: 'Run Nirvana eligibility check upstream to recover primary payer on file and resolve COB issues' },
+  { code: 'CO-109', desc: 'Not covered by this payer/contractor',     share: 0.20, fix: 'Use Nirvana BlueCard eligibility routing to recover correct BCBS home plan before claim filing' },
+  { code: 'PR-27',  desc: 'Patient cannot be identified as insured',  share: 0.14, fix: 'Run Nirvana insurance discovery upstream to recover active policy, or switch patient to self-pay if none found' },
+  { code: 'CO-26',  desc: 'Expenses incurred prior to coverage',      share: 0.10, fix: 'Run Nirvana insurance discovery (name / DOB / ZIP) upstream to recover active policy, or switch patient to self-pay' },
+  { code: 'CO-31',  desc: 'Patient cannot be identified as insured',  share: 0.08, fix: 'Run Nirvana member ID + demographic cross-check against payer master file' },
+  { code: 'CO-28',  desc: 'Coverage not in effect on date of service',share: 0.06, fix: 'Run Nirvana eligibility check at encounter to verify active coverage on DOS' },
 ];
 
 const REJECTION_REASONS = [
-  { code: 'INCORRECT-PAYER', desc: 'Incorrect payer on file',       share: 0.34, fix: 'Nirvana payer discovery returns correct payer ID pre-submission' },
-  { code: 'MEMBER-ID',       desc: 'Missing or invalid member ID',  share: 0.22, fix: 'Auto-correction on transposed member IDs' },
-  { code: 'MCO-MISSING',     desc: 'Medicaid/Medicare MCO not on file', share: 0.17, fix: 'Managed plan detection — flip fee-for-service to correct MCO' },
-  { code: 'DOB-MISMATCH',    desc: 'DOB does not match payer record', share: 0.11, fix: null },
-  { code: 'NAME-MISMATCH',   desc: 'First / last name mismatch',    share: 0.08, fix: null },
-  { code: 'BCBS-SUFFIX',     desc: 'Missing BCBS alpha prefix',     share: 0.05, fix: null },
-  { code: 'Other',           desc: 'Long-tail reasons',              share: 0.03, fix: null },
+  { code: 'INCORRECT-PAYER',  desc: 'Incorrect payer on file',                 share: 0.35, fix: 'Run Nirvana check more upstream to auto-correct payer IDs pre-submission' },
+  { code: 'MEMBER-ID-ERROR',  desc: 'Missing or invalid member ID',            share: 0.23, fix: 'Trigger Nirvana checks upstream to run discovery for missing IDs and auto-fix patients with erroneous IDs on file' },
+  { code: 'MCO-MISSING',      desc: 'Medicaid / Medicare MCO not on file',     share: 0.17, fix: 'Run Nirvana Medicaid / Medicare check to recover correct MCO for patients on fee-for-service or previously tagged as Original Medicare or Medicaid' },
+  { code: 'DOB-MISMATCH',     desc: 'DOB does not match payer record',         share: 0.11, fix: 'Trigger Nirvana check upstream to auto-fix erroneous DOB on file' },
+  { code: 'NAME-MISMATCH',    desc: 'First / last name mismatch',              share: 0.08, fix: 'Run Nirvana demographic normalization to auto-fix typos in patient names' },
+  { code: 'BCBS-SUFFIX',      desc: 'Missing BCBS alpha prefix / suffix',      share: 0.06, fix: 'Use Nirvana BlueCard routing to complete missing BCBS prefixes before filing' },
 ];
 
 const PREFILE_REASONS = [
-  { code: 'INACTIVE-POLICY', desc: 'Policy inactive on DOS',         share: 0.28, fix: 'Real-time active-coverage check at scheduling or check-in' },
-  { code: 'MEMBER-ID-BAD',   desc: 'Incorrect or missing member ID', share: 0.23, fix: 'Auto-discovery of member ID via demographic match' },
-  { code: 'NAME-INCORRECT',  desc: 'Incorrect first/last name',      share: 0.16, fix: 'Demographic normalization to payer master file' },
-  { code: 'NO-AUTH',         desc: 'Missing prior authorization',    share: 0.14, fix: 'Prior-auth requirement flag at scheduling' },
-  { code: 'WRONG-PRODUCT',   desc: 'Wrong plan product at intake',   share: 0.10, fix: null },
-  { code: 'SELF-PAY-HIDDEN', desc: 'Self-pay with hidden coverage',  share: 0.06, fix: null },
-  { code: 'Other',           desc: 'Long-tail reasons',               share: 0.03, fix: null },
+  { code: 'INACTIVE-POLICY',     desc: 'Policy inactive on date of service',          share: 0.29, fix: 'Real-time coverage and insurance discovery check further upstream (ex: at scheduling or check-in)' },
+  { code: 'MEMBER-ID-MISMATCH',  desc: 'Missing or invalid member ID',                share: 0.23, fix: 'Trigger Nirvana checks upstream to run discovery for missing IDs and auto-fix patients with erroneous IDs on file' },
+  { code: 'INCORRECT-NAME',      desc: 'Typo in first or last name',                  share: 0.17, fix: 'Trigger Nirvana check upstream to auto-fix typos in patient names' },
+  { code: 'INVALID-AUTH',        desc: 'Missing or invalid prior authorization',      share: 0.14, fix: 'Embed Nirvana upstream to trigger prior-auth requirement flag and check current status of authorization' },
+  { code: 'INCORRECT-PAYER',     desc: 'Incorrect payer selected at intake',          share: 0.10, fix: 'Run Nirvana payer discovery at intake to verify correct carrier and product before scheduling' },
+  { code: 'INCORRECT-SELF-PAY',  desc: 'Patients with coverage incorrectly marked as self-pay', share: 0.07, fix: 'Run Nirvana coverage discovery on all self-pay registrations to recover hidden active policies' },
 ];
 
 const DENIAL_PAYERS_BY_WINDOW = {
@@ -795,7 +860,6 @@ const DENIAL_PAYERS_BY_WINDOW = {
     { name: 'AmeriHealth Caritas NC',            share: 0.09 },
     { name: 'AZ Complete Health',                share: 0.07 },
     { name: 'Cigna',                             share: 0.06 },
-    { name: 'Other',                             share: 0.13 },
   ],
   '2mo': [
     { name: 'UnitedHealthcare',                  share: 0.22 },
@@ -805,7 +869,6 @@ const DENIAL_PAYERS_BY_WINDOW = {
     { name: 'AmeriHealth Caritas NC',            share: 0.09 },
     { name: 'AZ Complete Health',                share: 0.08 },
     { name: 'Cigna',                             share: 0.06 },
-    { name: 'Other',                             share: 0.13 },
   ],
   since: [
     { name: 'UnitedHealthcare',                  share: 0.21 },
@@ -815,7 +878,6 @@ const DENIAL_PAYERS_BY_WINDOW = {
     { name: 'AmeriHealth Caritas NC',            share: 0.10 },
     { name: 'AZ Complete Health',                share: 0.08 },
     { name: 'Cigna',                             share: 0.05 },
-    { name: 'Other',                             share: 0.13 },
   ],
 };
 
@@ -828,7 +890,6 @@ const DENIAL_OFFICES_BY_WINDOW = {
     { name: 'Charlotte Radiology',               share: 0.10 },
     { name: 'Gateway Diagnostic Imaging',        share: 0.08 },
     { name: 'Windsong Radiology',                share: 0.06 },
-    { name: 'Other',                             share: 0.06 },
   ],
   '2mo': [
     { name: 'Radiology Ltd. — Tucson',           share: 0.21 },
@@ -838,7 +899,6 @@ const DENIAL_OFFICES_BY_WINDOW = {
     { name: 'Charlotte Radiology',               share: 0.11 },
     { name: 'Gateway Diagnostic Imaging',        share: 0.08 },
     { name: 'Windsong Radiology',                share: 0.06 },
-    { name: 'Other',                             share: 0.06 },
   ],
   since: [
     { name: 'American Health Imaging — TX',      share: 0.20 },
@@ -848,7 +908,6 @@ const DENIAL_OFFICES_BY_WINDOW = {
     { name: 'Charlotte Radiology',               share: 0.11 },
     { name: 'Gateway Diagnostic Imaging',        share: 0.08 },
     { name: 'Windsong Radiology',                share: 0.06 },
-    { name: 'Other',                             share: 0.06 },
   ],
 };
 
@@ -861,7 +920,6 @@ const REJECTION_PAYERS_BY_WINDOW = {
     { name: 'UnitedHealthcare MCO',     share: 0.10 },
     { name: 'APIPA (UHC Arizona)',      share: 0.09 },
     { name: 'Alliance Health',          share: 0.07 },
-    { name: 'Other',                    share: 0.12 },
   ],
   '2mo': [
     { name: 'WellCare NC OOS Medicaid', share: 0.19 },
@@ -871,7 +929,6 @@ const REJECTION_PAYERS_BY_WINDOW = {
     { name: 'UnitedHealthcare MCO',     share: 0.10 },
     { name: 'APIPA (UHC Arizona)',      share: 0.09 },
     { name: 'Alliance Health',          share: 0.07 },
-    { name: 'Other',                    share: 0.13 },
   ],
   since: [
     { name: 'WellCare NC OOS Medicaid', share: 0.18 },
@@ -881,7 +938,6 @@ const REJECTION_PAYERS_BY_WINDOW = {
     { name: 'UnitedHealthcare MCO',     share: 0.11 },
     { name: 'APIPA (UHC Arizona)',      share: 0.10 },
     { name: 'Alliance Health',          share: 0.07 },
-    { name: 'Other',                    share: 0.12 },
   ],
 };
 
@@ -894,7 +950,6 @@ const REJECTION_OFFICES_BY_WINDOW = {
     { name: 'SJRA — Turnersville',          share: 0.10 },
     { name: 'Charlotte Radiology',          share: 0.08 },
     { name: 'Gateway Diagnostic Imaging',   share: 0.07 },
-    { name: 'Other',                        share: 0.06 },
   ],
   '2mo': [
     { name: 'American Health Imaging — TX', share: 0.24 },
@@ -904,7 +959,6 @@ const REJECTION_OFFICES_BY_WINDOW = {
     { name: 'SJRA — Turnersville',          share: 0.10 },
     { name: 'Charlotte Radiology',          share: 0.08 },
     { name: 'Gateway Diagnostic Imaging',   share: 0.07 },
-    { name: 'Other',                        share: 0.06 },
   ],
   since: [
     { name: 'American Health Imaging — TX', share: 0.22 },
@@ -914,11 +968,60 @@ const REJECTION_OFFICES_BY_WINDOW = {
     { name: 'SJRA — Turnersville',          share: 0.11 },
     { name: 'Charlotte Radiology',          share: 0.08 },
     { name: 'Gateway Diagnostic Imaging',   share: 0.07 },
-    { name: 'Other',                        share: 0.06 },
   ],
 };
 
 const getWindowData = (map, win) => map[win === 'custom' ? 'month' : win] || map.month;
+
+/* ===== InfoIcon tooltip ===== */
+function InfoIcon({ tip }) {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+  const ref = React.useRef(null);
+
+  const toggle = (e) => {
+    e.stopPropagation();
+    if (!open && ref.current) {
+      const rect = ref.current.getBoundingClientRect();
+      setPos({ top: rect.top - 8, left: rect.left + rect.width / 2 });
+    }
+    setOpen(!open);
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    window.addEventListener('click', close);
+    window.addEventListener('scroll', close, true);
+    return () => {
+      window.removeEventListener('click', close);
+      window.removeEventListener('scroll', close, true);
+    };
+  }, [open]);
+
+  return (
+    <React.Fragment>
+      <span
+        ref={ref}
+        className={`info-icon ${open ? 'open' : ''}`}
+        onClick={toggle}
+        role="button"
+      >i</span>
+      {open && (
+        <div
+          className="tip-popover"
+          style={{
+            top: pos.top,
+            left: pos.left,
+            transform: 'translate(-50%, -100%)',
+          }}
+        >
+          {tip}
+        </div>
+      )}
+    </React.Fragment>
+  );
+}
 
 /* ===== Helpers ===== */
 function fmtNum(n, opts = {}) {
@@ -971,7 +1074,7 @@ function HeroLeakage({ quarter, setQuarter }) {
           </button>
         ))}
       </div>
-      <div className="kpi-label">Eligibility-related leakage</div>
+      <div className="kpi-label">Eligibility-related leakage <InfoIcon tip="Revenue lost to eligibility-related denials and rejections. FY25 baseline: $2.65M." /></div>
       <div className="kpi-value">{fmtMoney(cur.value, { compact: true })}</div>
       <div className="kpi-delta-row">
         {cur.yoyPct !== null && (
@@ -988,7 +1091,7 @@ function HeroLeakage({ quarter, setQuarter }) {
 function HeroProjected() {
   return (
     <div className="hero-card-secondary">
-      <div className="kpi-label">Projected leakage · EOY 2026</div>
+      <div className="kpi-label">Projected leakage · EOY 2026 <InfoIcon tip="Projected FY26 leakage based on current automation trajectory. Compared to $2.65M in FY25." /></div>
       <div className="kpi-value">{fmtMoney(EOY_PROJ.value, { compact: true })}</div>
       <div className="kpi-delta-row">
         <span className="delta-pill positive">
@@ -1024,22 +1127,22 @@ function TopKPIs({ window, setWindow }) {
       <FilterScroller options={WINDOW_OPTIONS} value={window} onChange={setWindow} />
       <div className="mini-kpi-grid">
         <div className="mini-kpi">
-          <div className="mini-kpi-label">Exceptions automated</div>
+          <div className="mini-kpi-label">Exceptions automated <InfoIcon tip="Exceptions Nirvana resolved without manual biller touch." /></div>
           <div className="mini-kpi-value">{fmtNum(autoTotal, { compact: true })}</div>
           <div className="mini-kpi-delta">▲ 12.3% vs. prior</div>
         </div>
         <div className="mini-kpi">
-          <div className="mini-kpi-label">Automation rate</div>
+          <div className="mini-kpi-label">Automation rate <InfoIcon tip="Share of incoming exceptions resolved automatically. Pilot baseline: 39%." /></div>
           <div className="mini-kpi-value">{(overallAutoRate * 100).toFixed(1)}<span className="suffix">%</span></div>
           <div className="mini-kpi-delta">▲ 2.1 pts vs. pilot</div>
         </div>
         <div className="mini-kpi">
-          <div className="mini-kpi-label">Hours saved</div>
+          <div className="mini-kpi-label">Hours saved <InfoIcon tip="Hours of manual biller work eliminated. Based on 6.2 min per exception." /></div>
           <div className="mini-kpi-value">{fmtNum(hoursSaved, { decimals: 0 })}<span className="suffix">hrs</span></div>
           <div className="mini-kpi-delta">▲ {(hoursSaved / 160).toFixed(1)} FTE equiv.</div>
         </div>
         <div className="mini-kpi">
-          <div className="mini-kpi-label">Cost savings</div>
+          <div className="mini-kpi-label">Cost savings <InfoIcon tip="SG&A saved from eliminated biller hours. Excludes revenue recovered from prevented denials." /></div>
           <div className="mini-kpi-value">{fmtMoney(costSaved, { compact: true })}</div>
           <div className="mini-kpi-delta">▲ {fmtMoney(costSaved / months * 12, { compact: true })} run rate</div>
         </div>
@@ -1072,21 +1175,21 @@ function PhaseAccordion({ type, title, received, automated, hoursSaved, costSave
           <FilterScroller options={WINDOW_OPTIONS} value={window} onChange={setWindow} />
           <div className="mini-kpi-grid">
             <div className="mini-kpi">
-              <div className="mini-kpi-label">Total received</div>
+              <div className="mini-kpi-label">Total received <InfoIcon tip="Total exceptions of this type received in this window." /></div>
               <div className="mini-kpi-value">{fmtNum(received, { compact: true })}</div>
             </div>
             <div className="mini-kpi">
-              <div className="mini-kpi-label">Automated</div>
+              <div className="mini-kpi-label">Automated <InfoIcon tip="Exceptions Nirvana resolved automatically in this window." /></div>
               <div className="mini-kpi-value">{fmtNum(automated, { compact: true })}</div>
               <div className="mini-kpi-delta">▲ {autoPct}% rate</div>
             </div>
             <div className="mini-kpi">
-              <div className="mini-kpi-label">Hours saved</div>
+              <div className="mini-kpi-label">Hours saved <InfoIcon tip="Biller hours eliminated. 6.2 min saved per automated exception." /></div>
               <div className="mini-kpi-value">{fmtNum(hoursSaved, { decimals: 0 })}<span className="suffix">hrs</span></div>
               <div className="mini-kpi-delta">▲ {(hoursSaved / 160).toFixed(1)} FTE</div>
             </div>
             <div className="mini-kpi">
-              <div className="mini-kpi-label">Cost savings</div>
+              <div className="mini-kpi-label">Cost savings <InfoIcon tip="SG&A saved at $21.60/hr blended billing rate." /></div>
               <div className="mini-kpi-value">{fmtMoney(costSaved, { compact: true })}</div>
               <div className="mini-kpi-delta">▲ {fmtMoney(costSaved * 12, { compact: true })} / yr</div>
             </div>
@@ -1117,7 +1220,7 @@ function PhaseAccordion({ type, title, received, automated, hoursSaved, costSave
 
           <div className="breakdown-section">
             <div className="breakdown-title">Top Nirvana Fixes</div>
-            {codes.filter(c => c.fix).slice(0, 3).map(c => (
+            {codes.filter(c => c.fix).map(c => (
               <div key={c.code} className="fix-callout">
                 <div className="fix-callout-head">↳ For {c.code}</div>
                 <div className="fix-callout-body">{c.fix}</div>
@@ -1131,7 +1234,9 @@ function PhaseAccordion({ type, title, received, automated, hoursSaved, costSave
 }
 
 function SummaryBars({ title, subtitle, data, color, total, window, setWindow }) {
-  const maxShare = Math.max(...data.map(d => d.share));
+  const sumShares = data.reduce((acc, d) => acc + d.share, 0);
+  const normalized = data.map(d => ({ ...d, share: d.share / sumShares }));
+  const maxShare = Math.max(...normalized.map(d => d.share));
   const scaleMax = Math.ceil(maxShare * 10) / 10;
   return (
     <div className="summary-card">
@@ -1139,7 +1244,7 @@ function SummaryBars({ title, subtitle, data, color, total, window, setWindow })
       <div className="summary-card-sub">{subtitle}</div>
       <FilterScroller options={SUMMARY_WINDOW_OPTIONS} value={window} onChange={setWindow} />
       <div className="scale-marker">0% — {(scaleMax * 100).toFixed(0)}% scale</div>
-      {data.map(d => {
+      {normalized.map(d => {
         const vol = Math.round(total * d.share);
         const pct = (d.share * 100).toFixed(1);
         const width = (d.share / scaleMax) * 100;
